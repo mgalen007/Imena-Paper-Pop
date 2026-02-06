@@ -341,6 +341,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Imena Paper Pop API is running' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🎉 Imena Paper Pop server running on http://localhost:${PORT}`);
 });
