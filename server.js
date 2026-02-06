@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
@@ -14,32 +14,32 @@ app.use(express.static('public'));
 
 // Generate PDF endpoint
 app.post('/api/generate-pdf', async (req, res) => {
-    try {
-        const { eventTitle, eventDate, eventTime, location, agenda, organizer, description } = req.body;
+  try {
+    const { eventTitle, eventDate, eventTime, location, agenda, organizer, description } = req.body;
 
-        // Validate required fields
-        if (!eventTitle || !eventDate || !eventTime) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
+    // Validate required fields
+    if (!eventTitle || !eventDate || !eventTime) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-        // Read logo and convert to base64
-        const logoPath = path.join(__dirname, 'public', 'imena-logo.png');
-        let logoBase64 = '';
-        if (fs.existsSync(logoPath)) {
-            const logoBuffer = fs.readFileSync(logoPath);
-            logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`;
-        }
+    // Read logo and convert to base64
+    const logoPath = path.join(__dirname, 'public', 'imena-logo.png');
+    let logoBase64 = '';
+    if (fs.existsSync(logoPath)) {
+      const logoBuffer = fs.readFileSync(logoPath);
+      logoBase64 = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+    }
 
-        // Launch browser
-        const browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+    // Launch browser
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
 
-        const page = await browser.newPage();
+    const page = await browser.newPage();
 
-        // Create HTML content for the invitation (Minimalistic & Clean Design)
-        const htmlContent = `
+    // Create HTML content for the invitation (Minimalistic & Clean Design)
+    const htmlContent = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -309,38 +309,38 @@ app.post('/api/generate-pdf', async (req, res) => {
 </html>
     `;
 
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-        // Generate PDF
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '0px',
-                right: '0px',
-                bottom: '0px',
-                left: '0px'
-            }
-        });
+    // Generate PDF
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '0px',
+        right: '0px',
+        bottom: '0px',
+        left: '0px'
+      }
+    });
 
-        await browser.close();
+    await browser.close();
 
-        // Send PDF
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=Imena-Invitation-${Date.now()}.pdf`);
-        res.send(pdfBuffer);
+    // Send PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=Imena-Invitation-${Date.now()}.pdf`);
+    res.send(pdfBuffer);
 
-    } catch (error) {
-        console.error('Error generating PDF:', error);
-        res.status(500).json({ error: 'Failed to generate PDF', details: error.message });
-    }
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).json({ error: 'Failed to generate PDF', details: error.message });
+  }
 });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Imena Paper Pop API is running' });
+  res.json({ status: 'ok', message: 'Imena Paper Pop API is running' });
 });
 
 app.listen(PORT, () => {
-    console.log(`🎉 Imena Paper Pop server running on http://localhost:${PORT}`);
+  console.log(`🎉 Imena Paper Pop server running on http://localhost:${PORT}`);
 });
