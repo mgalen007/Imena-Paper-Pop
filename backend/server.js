@@ -20,7 +20,7 @@ app.post('/api/generate-pdf', async (req, res) => {
     if (!eventTitle || !eventDate || !eventTime) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
 
     // Read logo and convert to base64
     const logoPath = path.join(__dirname, 'imena-logo.png');
@@ -33,8 +33,8 @@ app.post('/api/generate-pdf', async (req, res) => {
     // Launch browser
     const browser = await puppeteer.launch({
       headless: 'new',
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      executablePath: '/usr/bin/google-chrome'
     });
 
     const page = await browser.newPage();
