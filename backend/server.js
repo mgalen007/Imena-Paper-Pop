@@ -20,6 +20,7 @@ app.post('/api/generate-pdf', async (req, res) => {
     if (!eventTitle || !eventDate || !eventTime) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    
 
     // Read logo and convert to base64
     const logoPath = path.join(__dirname, 'imena-logo.png');
