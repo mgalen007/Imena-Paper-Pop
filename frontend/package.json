@@ -1,0 +1,12 @@
+{
+    "name": "imena-frontend",
+    "version": "1.0.0",
+    "description": "Frontend for Imena Paper Pop",
+    "scripts": {
+        "start": "npx serve .",
+        "dev": "npx serve ."
+    },
+    "dependencies": {
+        "serve": "^14.2.1"
+    }
+}
