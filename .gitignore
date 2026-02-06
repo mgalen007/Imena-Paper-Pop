@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+dist/
+build/
+*.log
+package-lock.json
+.env
+.env.local
+backend/node_modules/
+frontend/node_modules/
