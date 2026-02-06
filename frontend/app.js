@@ -1,7 +1,5 @@
 // API Configuration
-const API_URL = window.location.origin.includes('localhost')
-    ? 'http://localhost:3000'
-    : 'https://imena-backend.up.railway.app'; // Replace with your actual Railway backend URL
+const API_URL = "https://imena-paper-pop-production.up.railway.app"
 
 // DOM Elements
 const form = document.getElementById('invitationForm');
