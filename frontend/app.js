@@ -1,6 +1,3 @@
-// API Configuration
-const API_URL = "https://imena-paper-pop-production.up.railway.app"
-
 // DOM Elements
 const form = document.getElementById('invitationForm');
 const generateBtn = document.getElementById('generateBtn');
@@ -11,9 +8,55 @@ const errorMessage = document.getElementById('errorMessage');
 const errorText = document.getElementById('errorText');
 const currentYear = document.getElementById('year');
 
-currentYear.textContent = new Date().getFullYear();
+if (currentYear) {
+    currentYear.textContent = new Date().getFullYear();
+}
 
-// Form submission handler
+// Real-time Preview Mapping
+const previewInputs = ['eventTitle', 'description', 'eventDate', 'eventTime', 'location', 'agenda', 'organizer'];
+previewInputs.forEach(id => {
+    const input = document.getElementById(id);
+    const prev = document.getElementById('prev' + id.charAt(0).toUpperCase() + id.slice(1));
+
+    if (input && prev) {
+        input.addEventListener('input', () => {
+            if (id === 'eventDate') {
+                const date = new Date(input.value);
+                prev.textContent = isNaN(date.getTime()) ? 'October 25, 2025' : date.toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            } else if (id === 'eventTime') {
+                if (input.value) {
+                    const [hours, minutes] = input.value.split(':');
+                    const hour = parseInt(hours);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const displayHour = hour % 12 || 12;
+                    prev.textContent = `${displayHour}:${minutes} ${ampm}`;
+                } else {
+                    prev.textContent = '11:00 AM';
+                }
+            } else if (id === 'location') {
+                const container = document.getElementById('prevLocationContainer');
+                prev.textContent = input.value || 'Imena Family Home, Kigali';
+                if (container) container.style.display = input.value ? 'flex' : 'none';
+            } else if (id === 'agenda') {
+                const container = document.getElementById('prevAgendaContainer');
+                prev.textContent = input.value || '11:00 AM - Arrival\n12:30 PM - Lunch';
+                if (container) container.style.display = input.value ? 'block' : 'none';
+            } else {
+                let defaultValue = '';
+                if (id === 'eventTitle') defaultValue = 'Family Gathering';
+                if (id === 'organizer') defaultValue = 'Imena Family';
+
+                prev.textContent = input.value || defaultValue;
+            }
+        });
+    }
+});
+
+// Form submission handler (Fully Client-Side PDF Generation)
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -25,76 +68,49 @@ form.addEventListener('submit', async (e) => {
     setLoadingState(true);
 
     try {
-        // Gather form data
-        const formData = {
-            eventTitle: document.getElementById('eventTitle').value.trim(),
-            eventDate: document.getElementById('eventDate').value,
-            eventTime: document.getElementById('eventTime').value,
-            location: document.getElementById('location').value.trim(),
-            organizer: document.getElementById('organizer').value.trim(),
-            description: document.getElementById('description').value.trim(),
-            agenda: document.getElementById('agenda').value.trim()
-        };
+        const { jsPDF } = window.jspdf;
+        const element = document.getElementById('pdfCapture');
 
-        // Validate required fields
-        if (!formData.eventTitle || !formData.eventDate || !formData.eventTime) {
-            throw new Error('Please fill in all required fields');
+        if (!element) {
+            throw new Error('Capture element not found');
         }
 
-        // Make API request
-        const response = await fetch(`${API_URL}/api/generate-pdf`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
+        // High quality capture
+        const canvas = await html2canvas(element, {
+            scale: 3, // Higher scale for better print quality
+            useCORS: true,
+            backgroundColor: null,
+            logging: false
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to generate PDF');
-        }
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4'
+        });
 
-        // Get PDF blob
-        const blob = await response.blob();
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Imena-Invitation-${formData.eventTitle.replace(/\s+/g, '-')}-${Date.now()}.pdf`;
-        document.body.appendChild(a);
-        a.click();
+        // Position on page
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-        // Cleanup
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const title = document.getElementById('eventTitle').value.trim().replace(/\s+/g, '-');
+        pdf.save(`Imena-Invitation-${title || 'Event'}.pdf`);
 
         // Show success message
         successMessage.classList.remove('hidden');
-
-        // Scroll to success message
         successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-        // Add success animation
+        // Add bounce animation
         successMessage.style.animation = 'fadeInUp 0.5s ease-out';
 
-        // Optional: Reset form after successful generation
-        // form.reset();
-
     } catch (error) {
-        console.error('Error:', error);
-
-        // Show error message
-        errorText.textContent = error.message || 'Something went wrong. Please try again.';
+        console.error('Error generating PDF:', error);
+        errorText.textContent = 'Oops! Something went wrong while generating your PDF. Please try again.';
         errorMessage.classList.remove('hidden');
-
-        // Scroll to error message
         errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-        // Add error animation
-        errorMessage.style.animation = 'fadeInUp 0.5s ease-out';
-
     } finally {
         // Reset loading state
         setLoadingState(false);
@@ -106,7 +122,7 @@ function setLoadingState(isLoading) {
     if (isLoading) {
         generateBtn.disabled = true;
         generateBtn.classList.add('opacity-75', 'cursor-not-allowed');
-        btnText.textContent = 'Generating PDF...';
+        btnText.textContent = 'Generating...';
         btnSpinner.classList.remove('hidden');
     } else {
         generateBtn.disabled = false;
@@ -153,23 +169,10 @@ inputs.forEach(input => {
 
 // Set minimum date to today
 const dateInput = document.getElementById('eventDate');
-const today = new Date().toISOString().split('T')[0];
-dateInput.setAttribute('min', today);
-
-// Auto-format time input
-const timeInput = document.getElementById('eventTime');
-timeInput.addEventListener('blur', function () {
-    if (this.value) {
-        // Ensure time is in 12-hour format for display purposes
-        const [hours, minutes] = this.value.split(':');
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const displayHour = hour % 12 || 12;
-
-        // Add a data attribute for display (optional)
-        this.setAttribute('data-display', `${displayHour}:${minutes} ${ampm}`);
-    }
-});
+if (dateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.setAttribute('min', today);
+}
 
 // Add character counter for textareas
 const textareas = form.querySelectorAll('textarea');
@@ -220,20 +223,5 @@ document.querySelectorAll('section').forEach(section => {
 });
 
 // Console welcome message
-console.log('%c🎉 Imena Paper Pop', 'color: #1A74ED; font-size: 24px; font-weight: bold;');
-console.log('%cGenerate beautiful invitations for your family events!', 'color: #666; font-size: 14px;');
-console.log('%c💡 Built with love for the Imena Family', 'color: #999; font-size: 12px; font-style: italic;');
-
-// Check API health on load
-async function checkAPIHealth() {
-    try {
-        const response = await fetch(`${API_URL}/api/health`);
-        const data = await response.json();
-        console.log('✅ API Status:', data.message);
-    } catch (error) {
-        console.warn('⚠️ API not reachable. Make sure the server is running on port 3000');
-    }
-}
-
-// Check API health when page loads
-checkAPIHealth();
+console.log('%c🎉 Imena Paper Pop (Client-Side)', 'color: #1A74ED; font-size: 24px; font-weight: bold;');
+console.log('%cEverything stays on your computer!', 'color: #666; font-size: 14px;');

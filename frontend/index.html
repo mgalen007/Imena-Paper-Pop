@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1A74ED">
-    <title>Imena Paper Pop | Standalone Invitation Generator</title>
+    <title>Imena Paper Pop | Professional Invitation Generator</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,6 +20,9 @@
     <!-- PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
 
     <script>
         tailwind.config = {
@@ -263,7 +266,16 @@
                             <div class="text-3xl text-green-500">✅</div>
                             <div>
                                 <p class="font-bold text-green-800 text-lg">Done!</p>
-                                <p class="text-green-700">Your invitation has been downloaded.</p>
+                                <p class="text-green-700">Your invitation has been generated and downloaded.</p>
+                            </div>
+                        </div>
+
+                        <div id="errorMessage"
+                            class="hidden mt-8 p-6 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-4 animate-fade">
+                            <div class="text-3xl">⚠️</div>
+                            <div>
+                                <p class="font-bold text-red-800 text-lg">Error</p>
+                                <p id="errorText" class="text-red-700">Something went wrong. Please try again.</p>
                             </div>
                         </div>
                     </div>
@@ -291,9 +303,10 @@
                                 Invitation</p>
                         </div>
                         <div class="p-10 bg-white min-h-[400px]">
-                            <h4 id="prevTitle" class="text-3xl font-black text-slate-800 mb-4 font-outfit">Family
+                            <h4 id="prevEventTitle" class="text-3xl font-black text-slate-800 mb-4 font-outfit">Family
                                 Gathering</h4>
-                            <p id="prevDesc" class="text-slate-500 mb-8 pb-8 border-b border-slate-100 leading-relaxed">
+                            <p id="prevDescription"
+                                class="text-slate-500 mb-8 pb-8 border-b border-slate-100 leading-relaxed">
                                 Join us for a meaningful time together as we share family updates and celebrate our
                                 collective growth.</p>
 
@@ -315,7 +328,7 @@
                                         <p
                                             class="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-0.5">
                                             Date</p>
-                                        <p id="prevDate" class="font-bold text-slate-700">October 25, 2025</p>
+                                        <p id="prevEventDate" class="font-bold text-slate-700">October 25, 2025</p>
                                     </div>
                                 </div>
                                 <div
@@ -333,7 +346,7 @@
                                         <p
                                             class="text-[10px] uppercase font-black tracking-widest text-slate-400 mb-0.5">
                                             Time</p>
-                                        <p id="prevTime" class="font-bold text-slate-700">11:00 AM</p>
+                                        <p id="prevEventTime" class="font-bold text-slate-700">11:00 AM</p>
                                     </div>
                                 </div>
                             </div>
@@ -403,108 +416,7 @@
         </div>
     </footer>
 
-    <script>
-        const form = document.getElementById('invitationForm');
-        const generateBtn = document.getElementById('generateBtn');
-        const btnText = document.getElementById('btnText');
-        const btnSpinner = document.getElementById('btnSpinner');
-        const successMessage = document.getElementById('successMessage');
-        const yearSpan = document.getElementById('year');
-
-        // Year
-        yearSpan.textContent = new Date().getFullYear();
-
-        // Real-time Preview Mapping
-        const inputs = ['eventTitle', 'description', 'eventDate', 'eventTime', 'location', 'agenda', 'organizer'];
-        inputs.forEach(id => {
-            const input = document.getElementById(id);
-            const prev = document.getElementById('prev' + id.charAt(0).toUpperCase() + id.slice(1));
-
-            input.addEventListener('input', () => {
-                if (id === 'eventDate') {
-                    const date = new Date(input.value);
-                    prev.textContent = isNaN(date.getTime()) ? 'October 25, 2025' : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                } else if (id === 'eventTime') {
-                    prev.textContent = input.value || '11:00 AM';
-                } else if (id === 'location') {
-                    const container = document.getElementById('prevLocationContainer');
-                    prev.textContent = input.value || 'Imena Family Home, Kigali';
-                    container.style.display = input.value ? 'flex' : 'none';
-                } else if (id === 'agenda') {
-                    const container = document.getElementById('prevAgendaContainer');
-                    prev.textContent = input.value || '11:00 AM - Arrival\n12:30 PM - Lunch';
-                    container.style.display = input.value ? 'block' : 'none';
-                } else {
-                    prev.textContent = input.value || (id === 'eventTitle' ? 'Family Gathering' : '');
-                }
-            });
-        });
-
-        // Set min date
-        document.getElementById('eventDate').setAttribute('min', new Date().toISOString().split('T')[0]);
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            successMessage.classList.add('hidden');
-            generateBtn.disabled = true;
-            generateBtn.classList.add('opacity-75');
-            btnText.textContent = 'Generating...';
-            btnSpinner.classList.remove('hidden');
-
-            try {
-                const { jsPDF } = window.jspdf;
-                const element = document.getElementById('pdfCapture');
-
-                // High quality capture
-                const canvas = await html2canvas(element, {
-                    scale: 3, // Higher scale for better print quality
-                    useCORS: true,
-                    backgroundColor: null,
-                    logging: false
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF({
-                    orientation: 'p',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-                // Center if smaller than A4, otherwise scale
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-                const title = document.getElementById('eventTitle').value.replace(/\s+/g, '-');
-                pdf.save(`Imena-Invitation-${title || 'Event'}.pdf`);
-
-                successMessage.classList.remove('hidden');
-                successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                alert('Oops! Something went wrong while generating your PDF. Please try again.');
-            } finally {
-                generateBtn.disabled = false;
-                generateBtn.classList.remove('opacity-75');
-                btnText.textContent = 'Generate Invitation PDF';
-                btnSpinner.classList.add('hidden');
-            }
-        });
-
-        // Smooth scroll
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-    </script>
+    <script src="app.js"></script>
 </body>
 
 </html>
