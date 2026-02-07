@@ -91,10 +91,28 @@ form.addEventListener('submit', async (e) => {
         });
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        const pageHeight = pdf.internal.pageSize.getHeight();
 
-        // Position on page
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        // Use a slight margin so it looks like a card on a page
+        const margin = 10;
+        const maxCardWidth = pdfWidth - (margin * 2);
+        const maxCardHeight = pageHeight - (margin * 2);
+
+        let finalWidth = maxCardWidth;
+        let finalHeight = (canvas.height * maxCardWidth) / canvas.width;
+
+        // Scale to fit page height if too tall
+        if (finalHeight > maxCardHeight) {
+            const scale = maxCardHeight / finalHeight;
+            finalHeight = maxCardHeight;
+            finalWidth = finalWidth * scale;
+        }
+
+        // Center on page
+        const xOffset = (pdfWidth - finalWidth) / 2;
+        const yOffset = (pageHeight - finalHeight) / 2;
+
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
 
         const title = document.getElementById('eventTitle').value.trim().replace(/\s+/g, '-');
         pdf.save(`Imena-Invitation-${title || 'Event'}.pdf`);
