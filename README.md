@@ -127,54 +127,6 @@ Imena-Paper-Pop/
 └── README.md              # This file
 ```
 
----
-
-## 🏆 Hackathon Criteria
-
-This project excels in all three judging criteria:
-
-### 1. ⚡ Performance
-- Fast form submission and PDF generation
-- Optimized Puppeteer configuration
-- Efficient API endpoints
-- Smooth, responsive UI
-
-### 2. 🎨 UI / Design
-- Modern, premium design with gradients and animations
-- Consistent Imena branding
-- Intuitive user experience
-- Beautiful typography and spacing
-- Responsive across all devices
-
-### 3. 📄 Generated Template
-- Professional, polished invitation design
-- Imena Family logo and branding
-- Clean layout with proper hierarchy
-- Print-ready PDF quality
-- Customizable with all event details
-
----
-
-## 🎯 Example Use Case
-
-**Scenario**: The Wihogora sub-family wants to organize their Saturday activities.
-
-**Steps**:
-1. Open Imena Paper Pop
-2. Fill in:
-   - Title: "Wihogora Saturday Family Activities"
-   - Date: March 15, 2026
-   - Time: 10:00 AM
-   - Location: "Imena Family Home, Kigali"
-   - Organizer: "Wihogora Sub-Family"
-   - Agenda: Schedule of activities
-3. Click "Generate Invitation PDF"
-4. Download and share with all family members!
-
-**Result**: A beautiful, professional invitation that everyone can use to stay informed and excited about the event.
-
----
-
 ## 🔧 API Endpoints
 
 ### `POST /api/generate-pdf`
