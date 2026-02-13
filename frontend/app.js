@@ -56,16 +56,19 @@ previewInputs.forEach(id => {
     }
 });
 
-// Form submission handler (Fully Client-Side PDF Generation)
+// Form submission handler (Fully Client-Side Generation)
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const formatSelect = document.getElementById('exportFormat');
+    const format = formatSelect ? formatSelect.value : 'pdf'; // Default to PDF
 
     // Reset messages
     successMessage.classList.add('hidden');
     errorMessage.classList.add('hidden');
 
     // Show loading state
-    setLoadingState(true);
+    setLoadingState(true, format.toUpperCase());
 
     try {
         const { jsPDF } = window.jspdf;
@@ -84,49 +87,66 @@ form.addEventListener('submit', async (e) => {
         });
 
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'mm',
-            format: 'a4'
-        });
-
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-
-        // Use a slight margin so it looks like a card on a page
-        const margin = 10;
-        const maxCardWidth = pdfWidth - (margin * 2);
-        const maxCardHeight = pageHeight - (margin * 2);
-
-        let finalWidth = maxCardWidth;
-        let finalHeight = (canvas.height * maxCardWidth) / canvas.width;
-
-        // Scale to fit page height if too tall
-        if (finalHeight > maxCardHeight) {
-            const scale = maxCardHeight / finalHeight;
-            finalHeight = maxCardHeight;
-            finalWidth = finalWidth * scale;
-        }
-
-        // Center on page
-        const xOffset = (pdfWidth - finalWidth) / 2;
-        const yOffset = (pageHeight - finalHeight) / 2;
-
-        pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
-
         const title = document.getElementById('eventTitle').value.trim().replace(/\s+/g, '-');
-        pdf.save(`Imena-Invitation-${title || 'Event'}.pdf`);
+        const filename = `Imena-Invitation-${title || 'Event'}`;
+
+        if (format === 'pdf') {
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+
+            // Use a slight margin so it looks like a card on a page
+            const margin = 10;
+            const maxCardWidth = pdfWidth - (margin * 2);
+            const maxCardHeight = pageHeight - (margin * 2);
+
+            let finalWidth = maxCardWidth;
+            let finalHeight = (canvas.height * maxCardWidth) / canvas.width;
+
+            // Scale to fit page height if too tall
+            if (finalHeight > maxCardHeight) {
+                const scale = maxCardHeight / finalHeight;
+                finalHeight = maxCardHeight;
+                finalWidth = finalWidth * scale;
+            }
+
+            // Center on page
+            const xOffset = (pdfWidth - finalWidth) / 2;
+            const yOffset = (pageHeight - finalHeight) / 2;
+
+            pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
+            pdf.save(`${filename}.pdf`);
+        } else {
+            // PNG Download
+            const link = document.createElement('a');
+            link.href = imgData;
+            link.download = `${filename}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         // Show success message
         successMessage.classList.remove('hidden');
         successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
+        // Update success message text
+        const successText = successMessage.querySelector('.text-green-700');
+        if (successText) {
+            successText.textContent = `Your invitation (${format.toUpperCase()}) has been generated and downloaded.`;
+        }
+
         // Add bounce animation
         successMessage.style.animation = 'fadeInUp 0.5s ease-out';
 
     } catch (error) {
-        console.error('Error generating PDF:', error);
-        errorText.textContent = 'Oops! Something went wrong while generating your PDF. Please try again.';
+        console.error('Error generating file:', error);
+        errorText.textContent = 'Oops! Something went wrong while generating your invitation. Please try again.';
         errorMessage.classList.remove('hidden');
         errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } finally {
@@ -136,18 +156,29 @@ form.addEventListener('submit', async (e) => {
 });
 
 // Set loading state
-function setLoadingState(isLoading) {
+function setLoadingState(isLoading, format = 'PDF') {
     if (isLoading) {
         generateBtn.disabled = true;
         generateBtn.classList.add('opacity-75', 'cursor-not-allowed');
-        btnText.textContent = 'Generating...';
+        btnText.textContent = `Generating ${format}...`;
         btnSpinner.classList.remove('hidden');
     } else {
         generateBtn.disabled = false;
         generateBtn.classList.remove('opacity-75', 'cursor-not-allowed');
-        btnText.textContent = 'Generate Invitation PDF';
+        // Reset to original text or dynamic text based on current selection
+        const currentFormat = document.getElementById('exportFormat').value === 'pdf' ? 'PDF' : 'PNG';
+        btnText.textContent = 'Generate Invitation';
         btnSpinner.classList.add('hidden');
     }
+}
+
+// Update button text when format changes (Optional UX improvement)
+const exportFormatSelect = document.getElementById('exportFormat');
+if (exportFormatSelect) {
+    exportFormatSelect.addEventListener('change', (e) => {
+        // We can keep it simple or make it specific like "Download PDF" / "Download PNG"
+        // For now, "Generate Invitation" is clean enough, but let's keep it consistent.
+    });
 }
 
 // Smooth scroll for anchor links

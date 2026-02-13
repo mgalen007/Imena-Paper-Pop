@@ -254,9 +254,18 @@
                                     class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all resize-none"></textarea>
                             </div>
 
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">Format</label>
+                                <select id="exportFormat"
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all appearance-none bg-white">
+                                    <option value="pdf">PDF Document (.pdf)</option>
+                                    <option value="png">Image (.png)</option>
+                                </select>
+                            </div>
+
                             <button type="submit" id="generateBtn"
                                 class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-3">
-                                <span id="btnText">Generate Invitation PDF</span>
+                                <span id="btnText">Generate Invitation</span>
                                 <span id="btnSpinner" class="spinner hidden"></span>
                             </button>
                         </form>
